@@ -17,6 +17,12 @@ A custom Home Assistant dashboard card for SkyRC Bluetooth battery chargers (Q20
 - **Collapses** to its header row when the charger is unavailable or the switch is off.
 - Follows your theme in light and dark mode, with a visual editor.
 
+## Screenshots
+
+**Collapsed**: with the header switch off (here, the plug feeding the charger), the card shrinks to its header row so you can turn it back on.
+
+![Collapsed card with the charger's switch off](images/collapsed-switch-off.png)
+
 ## Requirements
 
 - Home Assistant 2024.12 or newer
