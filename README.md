@@ -4,7 +4,7 @@
 
 A custom Home Assistant dashboard card for SkyRC Bluetooth battery chargers (Q200neo and other neo-series models), built on the [ha-skyrc](https://github.com/lightheaded/ha-skyrc) integration.
 
-<!-- Add a screenshot of your own dashboard here, e.g. ![SkyRC Charger Card](images/card.png) -->
+<img src="images/card-idle.png" alt="SkyRC Charger Card with all four channels idle" width="420">
 
 ## Features
 
