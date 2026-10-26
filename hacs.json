@@ -1,0 +1,6 @@
+{
+  "name": "SkyRC Charger Card",
+  "filename": "skyrc-card.js",
+  "render_readme": true,
+  "homeassistant": "2024.12.0"
+}
