@@ -1,0 +1,101 @@
+blueprint:
+  name: SkyRC — notify when a channel finishes
+  description: >-
+    Sends a notification to your phone when a channel on a SkyRC charger
+    finishes, saying what finished, the pack, and how well its cells are
+    balanced, for example:
+
+
+    **🔋 Channel B charged**
+
+    LiPo 4S · 16.80 V · 1432 mAh
+
+    Cells 4.198–4.203 V (Δ5 mV)
+
+
+    Each part is left out when the charger doesn't report it. Needs the
+    [ha-skyrc](https://github.com/lightheaded/ha-skyrc) integration and the
+    Home Assistant companion app on your phone.
+  domain: automation
+  source_url: https://github.com/sargeantpepper/SkyRCchargercard/blob/main/blueprints/automation/skyrc-channel-done.yaml
+  input:
+    status_sensors:
+      name: Channel status sensors
+      description: >-
+        The charger's "Channel A status" … "Channel D status" sensors. Pick
+        only the channels you want notifications for.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - integration: skyrc
+              domain: sensor
+              device_class: enum
+    notify_device:
+      name: Phone
+      description: The phone to notify (needs the Home Assistant companion app).
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    spread_warning:
+      name: Cell imbalance warning
+      description: Add ⚠️ when the gap between the highest and lowest cell is more than this.
+      default: 50
+      selector:
+        number:
+          min: 5
+          max: 500
+          step: 5
+          unit_of_measurement: mV
+          mode: box
+
+mode: queued
+max: 10
+
+triggers:
+  - trigger: state
+    entity_id: !input status_sensors
+    to: "done"
+    # Don't fire again when a channel comes back after a missed Bluetooth poll.
+    not_from: ["unavailable", "unknown"]
+
+variables:
+  spread_warning: !input spread_warning
+  eid: "{{ trigger.entity_id }}"
+  channel: >-
+    {%- set m = (state_attr(eid, 'friendly_name') or '') | regex_findall('Channel ([A-D])', ignorecase=true) -%}
+    {%- if m %}{{ m[0] | upper }}{% elif '_channel_' in eid %}{{ eid.split('_channel_')[1][:1] | upper }}{% else %}?{% endif -%}
+  title: >-
+    {%- set verb = {
+      'charge': 'charged', 'balance_charge': 'charged', 'fast_charge': 'charged',
+      'auto_charge': 'charged', 're_peak': 're-peaked', 'discharge': 'discharged',
+      'storage': 'at storage voltage', 'cycle': 'cycled'
+    }.get(state_attr(eid, 'program'), 'finished') -%}
+    🔋 Channel {{ channel }} {{ verb }}
+  message: >-
+    {%- set base = eid[:-7] if eid.endswith('_status') else eid -%}
+    {%- set batt = {
+      'lipo': 'LiPo', 'liion': 'Li-ion', 'life': 'LiFe', 'lihv': 'LiHV',
+      'nimh': 'NiMH', 'nicd': 'NiCd', 'pb': 'Pb', 'pb_agm': 'Pb AGM'
+    }.get(state_attr(eid, 'battery_type')) -%}
+    {%- set cells = state_attr(eid, 'cell_configuration') -%}
+    {%- set cv = (state_attr(eid, 'cell_voltages_mv') or []) | select('number') | list -%}
+    {%- set v = states(base ~ '_voltage') -%}
+    {%- set mah = states(base ~ '_capacity') | int(0) -%}
+    {%- set t = states(base ~ '_battery_temperature') -%}
+    {%- set spread = (cv | max - cv | min) if cv | count > 1 else 0 -%}
+    {%- set parts = [[batt, cells] | select('string') | join(' ')] -%}
+    {%- if v | is_number %}{% set parts = parts + ['%.2f V' | format(v | float)] %}{% endif -%}
+    {%- if mah > 0 %}{% set parts = parts + [mah ~ ' mAh'] %}{% endif -%}
+    {{ parts | select | join(' · ') }}
+    {%- if cv | count > 1 %}{{ '\n' }}Cells {{ '%.3f' | format(cv | min / 1000) }}–{{ '%.3f' | format(cv | max / 1000) }} V (Δ{{ spread }} mV){% if spread > spread_warning %} ⚠️{% endif %}{% endif %}
+    {%- if t | is_number %}{{ '\n' }}Pack {{ t | float | round(0) | int }} °C{% endif %}
+
+actions:
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "{{ title }}"
+    # A notification needs some text, even if the charger reported nothing else.
+    message: "{{ message if message | trim else 'The program has finished.' }}"

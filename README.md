@@ -113,6 +113,22 @@ Changes are applied as you make them, so Close keeps them and Start uses them la
 
 *Peak sensitivity*, *cycle order* and *cycle count* are disabled by default in the integration; enable them on the charger's device page if you charge NiMH / NiCd packs.
 
+## Notification when a channel finishes
+
+The repo includes a blueprint that sends a notification to your phone when a channel finishes, for example:
+
+> **🔋 Channel B charged**\
+> LiPo 4S · 16.80 V · 1432 mAh\
+> Cells 4.198–4.203 V (Δ5 mV)
+
+[![Open your Home Assistant instance and show the blueprint import dialog with this blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fsargeantpepper%2FSkyRCchargercard%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fskyrc-channel-done.yaml)
+
+1. Click the button above (or in Home Assistant go to **Settings → Automations & scenes → Blueprints → Import blueprint** and paste `https://github.com/sargeantpepper/SkyRCchargercard/blob/main/blueprints/automation/skyrc-channel-done.yaml`).
+2. Click **Create automation** on the imported blueprint.
+3. Pick the charger's channel status sensors, your phone, and the cell imbalance level that adds a ⚠️ (default 50 mV).
+
+It says what finished (charged, discharged, at storage voltage, …), the battery type and cell count, voltage, capacity, cell spread and pack temperature, leaving out whatever the charger doesn't report. Voltage, capacity and temperature are found from the status sensor's entity ID, so they're left out if you've renamed those entities. Your phone needs the Home Assistant companion app.
+
 ## Notes
 
 - **Start** runs whatever program is staged for the channel (the battery type / program / current entities on the device page, or the preset you pick in the card).
