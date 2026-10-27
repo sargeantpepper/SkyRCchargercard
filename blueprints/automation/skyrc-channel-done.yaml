@@ -15,7 +15,7 @@ blueprint:
 
     Each part is left out when the charger doesn't report it. Needs the
     [ha-skyrc](https://github.com/lightheaded/ha-skyrc) integration and the
-    Home Assistant companion app on your phone.
+    Home Assistant companion app on each phone.
   domain: automation
   source_url: https://github.com/sargeantpepper/SkyRCchargercard/blob/main/blueprints/automation/skyrc-channel-done.yaml
   input:
@@ -32,10 +32,11 @@ blueprint:
               domain: sensor
               device_class: enum
     notify_device:
-      name: Phone
-      description: The phone to notify (needs the Home Assistant companion app).
+      name: Phones
+      description: The phones to notify (each needs the Home Assistant companion app).
       selector:
         device:
+          multiple: true
           filter:
             - integration: mobile_app
     spread_warning:
@@ -62,6 +63,10 @@ triggers:
 
 variables:
   spread_warning: !input spread_warning
+  notify_device: !input notify_device
+  # Automations made from the first version of this blueprint hold one phone,
+  # not a list.
+  phones: "{{ [notify_device] if notify_device is string else notify_device }}"
   eid: "{{ trigger.entity_id }}"
   channel: >-
     {%- set m = (state_attr(eid, 'friendly_name') or '') | regex_findall('Channel ([A-D])', ignorecase=true) -%}
@@ -93,9 +98,15 @@ variables:
     {%- if t | is_number %}{{ '\n' }}Pack {{ t | float | round(0) | int }} °C{% endif %}
 
 actions:
-  - domain: mobile_app
-    type: notify
-    device_id: !input notify_device
-    title: "{{ title }}"
-    # A notification needs some text, even if the charger reported nothing else.
-    message: "{{ message if message | trim else 'The program has finished.' }}"
+  - repeat:
+      for_each: "{{ phones }}"
+      sequence:
+        # The companion app's notify action is named after the phone, e.g.
+        # notify.mobile_app_pixel_8 for a phone called "Pixel 8".
+        - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+          # One phone failing shouldn't stop the others getting it.
+          continue_on_error: true
+          data:
+            title: "{{ title }}"
+            # A notification needs some text, even if the charger reported nothing else.
+            message: "{{ message if message | trim else 'The program has finished.' }}"
