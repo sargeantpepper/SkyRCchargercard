@@ -14,7 +14,7 @@
  * MIT licensed.
  */
 
-const CARD_VERSION = "1.5.1";
+const CARD_VERSION = "1.6.0";
 const DOMAIN = "skyrc";
 const ALL_CHANNELS = ["A", "B", "C", "D"];
 
@@ -447,6 +447,9 @@ class SkyrcCard extends HTMLElement {
     const found = data.some((d) => d.ids.status);
     const offline = found && data.every((d) => d.state === "unavailable");
     const active = data.filter((d) => d.meta.active).length;
+    // Total power going into / out of the packs on running channels (V × A).
+    const watts = data.filter((d) => d.meta.active && d.p != null);
+    const totalW = watts.length ? watts.reduce((sum, d) => sum + d.p, 0) : null;
     const chargerTemp = num(this._st(this._map.charger.charger_temp));
     const title = cfg.title ?? this._map.deviceName ?? "SkyRC charger";
 
@@ -480,6 +483,7 @@ class SkyrcCard extends HTMLElement {
           <div class="chips">
             ${offline && !switchedOff ? `<span class="chip warn" title="The charger isn't responding over Bluetooth"><ha-icon icon="mdi:bluetooth-off"></ha-icon><span class="txt">Unavailable</span></span>` : ""}
             ${active && !switchedOff ? `<span class="chip live"><span class="dot"></span><span class="txt">${active} active</span></span>` : ""}
+            ${totalW != null && !switchedOff && !offline ? `<span class="chip" title="Total power on running channels (pack voltage × current)"><ha-icon icon="mdi:flash"></ha-icon><span class="txt">${totalW < 10 ? fmt(totalW, 1) : Math.round(totalW)} W</span></span>` : ""}
             ${chargerTemp != null && !switchedOff ? `<span class="chip link" data-entity="${esc(this._map.charger.charger_temp)}"><ha-icon icon="mdi:thermometer"></ha-icon><span class="txt">${fmt(chargerTemp, 0)}°C</span></span>` : ""}
             ${this._renderSwitch()}
           </div>
