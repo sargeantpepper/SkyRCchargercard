@@ -13,7 +13,7 @@ A custom Home Assistant dashboard card for SkyRC Bluetooth battery chargers (Q20
 - **Cell balance**: a bar for each cell's voltage, with the spread between highest and lowest cell flagged in red past a threshold.
 - **Controls**: Start and Stop per channel (Stop needs a second tap within 3 seconds), and a preset picker.
 - **Set-up popup**: tap a channel that isn't running to choose battery type, program and settings, save presets and start it.
-- **Header**: an icon, active-channel count, total power while channels are running, the charger's internal temperature and an optional switch (e.g. the smart plug powering the charger).
+- **Header**: an icon, active-channel count with their total power, the charger's internal temperature and an optional switch (e.g. the smart plug powering the charger).
 - **Collapses** to its header row when the charger is unavailable or the switch is off.
 - Follows your theme in light and dark mode, with a visual editor.
 
@@ -55,10 +55,10 @@ HACS adds the dashboard resource for you and refreshes it on every update.
 
 1. Download `skyrc-card.js` from the [latest release](https://github.com/sargeantpepper/SkyRCchargercard/releases/latest) and copy it to `/config/www/SkyRC-ChargerCard/skyrc-card.js`.
 2. **Settings → Dashboards → ⋮ → Resources → Add resource**
-   URL: `/local/SkyRC-ChargerCard/skyrc-card.js?v=1.6.0`, type **JavaScript module**.
+   URL: `/local/SkyRC-ChargerCard/skyrc-card.js?v=1.6.1`, type **JavaScript module**.
 3. Reload your browser.
 
-When you update a manual install, change the `?v=` number on the resource to the new version so browsers fetch the new file instead of a cached one. The version you're running is printed in the browser console as `SKYRC-CARD 1.6.0`.
+When you update a manual install, change the `?v=` number on the resource to the new version so browsers fetch the new file instead of a cached one. The version you're running is printed in the browser console as `SKYRC-CARD 1.6.1`.
 
 ## Usage
 
